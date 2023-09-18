@@ -19,11 +19,11 @@ class User {
       `INSERT INTO users (username,
                           password,
                           first_name,
-                          ast_name,
+                          last_name,
                           phone,
                           last_login_at,
                           join_at)
-      VALUES ($1, $2, $3, $4, $5, current_timestamp,)
+      VALUES ($1, $2, $3, $4, $5, current_timestamp, current_timestamp)
       RETURNING username, password, first_name, last_name, phone`,
       [username, hashedPassword, first_name, last_name, phone]);
 
@@ -35,8 +35,8 @@ class User {
   static async authenticate(username, password) {
     const result = await db.query(
       `SELECT password
-    FROM users
-    WHERE username = $1`,
+        FROM users
+        WHERE username = $1`,
       [username]);
     const user = result.rows[0];
 
@@ -70,7 +70,8 @@ class User {
   static async all() {
     const result = await db.query(
       `SELECT username, first_name, last_name
-      FROM users;`);
+        FROM users;`);
+
     return result.rows;
   }
 
@@ -85,9 +86,14 @@ class User {
 
   static async get(username) {
     const result = await db.query(
-      `SELECT username, first_name, last_name, phone, join_at, last_login_at
-      FROM users
-      WHERE username = $1`,
+      `SELECT username,
+              first_name,
+              last_name,
+              phone,
+              join_at,
+              last_login_at
+        FROM users
+        WHERE username = $1`,
       [username]
     );
     const user = result.rows[0];
@@ -95,6 +101,7 @@ class User {
     if (!user) {
       throw new NotFoundError("Invalid username!");
     }
+
     return user;
   }
 
@@ -107,30 +114,47 @@ class User {
    */
 
   static async messagesFrom(username) {
-    const userResults = await db.query(
-      `SELECT username, first_name, last_name, phone
-      FROM users
-      WHERE username = $1`,
-      [username]
-    );
-    const user = userResults.rows[0];
+    const uResult = await db.query(`
+      SELECT username
+        FROM users
+        WHERE username = $1`,
+      [username]);
+    const user = uResult.rows[0];
 
     if (!user) {
-      throw new NotFoundError("Invalid username!");
+      throw new NotFoundError(`No such username`);
     }
 
-    const messageResults = await db.query(
-      `SELECT id, body, sent_at, read_at
-      FROM messages
-      WHERE to_username = $1`,
-      [username]
-    );
-    const messages = messageResults.rows;
+    const result = await db.query(
+      `SELECT m.id,
+              t.username,
+              t.first_name,
+              t.last_name,
+              t.phone,
+              m.body,
+              m.sent_at,
+              m.read_at
+         FROM messages as m
+                JOIN users AS t ON m.to_username = t.username
+         WHERE m.from_username = $1`,
+      [username]);
 
+    let messages = result.rows;
 
-    messages.map(m => m.to_user = user);
-
-    return messages;
+    return messages.map(m => (
+      {
+        id: m.id,
+        to_user: {
+          username: m.username,
+          first_name: m.first_name,
+          last_name: m.last_name,
+          phone: m.phone
+        },
+        body: m.body,
+        sent_at: m.sent_at,
+        read_at: m.read_at
+      }
+    ));
   }
 
   /** Return messages to this user.
@@ -142,30 +166,47 @@ class User {
    */
 
   static async messagesTo(username) {
-
-    const messageResults = await db.query(
-      `SELECT id, body, sent_at, read_at
-      FROM messages
-      WHERE to_username = $1`,
-      [username]
-    );
-    const messages = messageResults.rows;
-
-    messages.map(m => {
-      return m.
-    });
-
-    const userResults = await db.query(
-      `SELECT username, first_name, last_name, phone
+    const uResult = await db.query(`
+      SELECT username
         FROM users
         WHERE username = $1`,
-      [username]
-    );
-    const user = userResults.rows[0];
+      [username]);
+    const user = uResult.rows[0];
 
-    messages.map(m => m.from_user = user);
+    if (!user) {
+      throw new NotFoundError(`No such username`);
+    }
 
-    return messages;
+    const result = await db.query(
+      `SELECT m.id,
+              f.username,
+              f.first_name,
+              f.last_name,
+              f.phone,
+              m.body,
+              m.sent_at,
+              m.read_at
+         FROM messages as m
+                JOIN users AS f ON m.from_username = f.username
+         WHERE m.to_username = $1`,
+      [username]);
+
+    let messages = result.rows;
+
+    return messages.map(m => (
+      {
+        id: m.id,
+        from_user: {
+          username: m.username,
+          first_name: m.first_name,
+          last_name: m.last_name,
+          phone: m.phone
+        },
+        body: m.body,
+        sent_at: m.sent_at,
+        read_at: m.read_at
+      }
+    ));
   }
 }
 
