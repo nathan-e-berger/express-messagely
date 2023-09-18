@@ -21,9 +21,8 @@ class User {
                           first_name,
                           last_name,
                           phone,
-                          last_login_at,
                           join_at)
-      VALUES ($1, $2, $3, $4, $5, current_timestamp, current_timestamp)
+      VALUES ($1, $2, $3, $4, $5, current_timestamp)
       RETURNING username, password, first_name, last_name, phone`,
       [username, hashedPassword, first_name, last_name, phone]);
 
