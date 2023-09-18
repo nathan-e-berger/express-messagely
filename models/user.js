@@ -3,6 +3,7 @@
 const bcrypt = require("bcrypt");
 const { BCRYPT_WORK_FACTOR } = require("../config.js");
 const db = require("../db.js");
+const {NotFoundError, UnauthorizedError} = require("../expressError.js")
 
 /** User of the site. */
 
@@ -26,6 +27,18 @@ class User {
   /** Authenticate: is username/password valid? Returns boolean. */
 
   static async authenticate(username, password) {
+    const result = await db.query(
+    `SELECT password
+    FROM users
+    WHERE username = $1`,
+    [username]);
+    const user = result.rows[0];
+
+    if (!user) {
+      throw new NotFoundError("Username not found")
+    }
+
+    return await bcrypt.compare(password, user.password)
   }
 
   /** Update last_login_at for user */
