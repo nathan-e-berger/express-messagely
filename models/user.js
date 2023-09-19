@@ -39,9 +39,8 @@ class User {
       [username]);
     const user = result.rows[0];
 
-    //TODO: throw unauthorized, don't let them know the username is not found
     if (!user) {
-      throw new NotFoundError("Username not found");
+      throw new UnauthorizedError("Forbidden!");
     }
 
     //return explicitly if statement evaluates to true, allow specifically vs deny broadly
@@ -68,11 +67,11 @@ class User {
   /** All: basic info on all users:
    * [{username, first_name, last_name}, ...] */
 
-  //TODO: add ORDER BY, don't let SQL be the boss
   static async all() {
     const result = await db.query(
       `SELECT username, first_name, last_name
-        FROM users;`);
+        FROM users
+        ORDER BY username;`);
 
     return result.rows;
   }
