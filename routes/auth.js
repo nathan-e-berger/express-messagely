@@ -17,6 +17,7 @@ router.post("/login", async function (req, res, next) {
   }
   const payload = { username };
   const _token = jwt.sign(payload, SECRET_KEY);
+  await User.updateLoginTimestamp(username);
   return res.json({ _token });
 });
 
@@ -30,7 +31,8 @@ router.post("/register", async function (req, res, next) {
   User.register({ username, password, first_name, last_name, phone });
   const payload = { username };
   const _token = jwt.sign(payload, SECRET_KEY);
-  return res.json({ _token });
+  await User.updateLoginTimestamp(username);
+  return res.status(201).json({ _token });
 });
 
 
