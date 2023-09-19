@@ -40,7 +40,6 @@ router.post("/register", async function (req, res, next) {
   const payload = { username };
   const _token = jwt.sign(payload, SECRET_KEY);
 
-  await User.updateLoginTimestamp(username);
 
   return res.status(201).json({ _token });
 });
