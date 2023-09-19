@@ -21,12 +21,13 @@ const Message = require("../models/message");
 
 router.get("/:id", ensureLoggedIn, async function (req, res, next) {
   const message = await Message.get(req.params.id);
+
   const currentUser = res.locals.user.username;
-  console.log("message=", message);
-  console.log("res.locals==", res.locals.user.username);
-  if (currentUser !== message.from_user.username && currentUser !== message.to_user.username) {
+  if (currentUser !== message.from_user.username
+    && currentUser !== message.to_user.username) {
     throw new UnauthorizedError("Na ah ah");
   }
+
   return res.json({ message });
 });
 
@@ -41,7 +42,9 @@ router.get("/:id", ensureLoggedIn, async function (req, res, next) {
 router.post("/", ensureLoggedIn, async function (req, res, next) {
   const { to_username, body } = req.body;
   const from_username = res.locals.user.username;
+
   const message = await Message.create({ from_username, to_username, body });
+
   return res.status(201).json({ message });
 });
 
@@ -56,11 +59,14 @@ router.post("/", ensureLoggedIn, async function (req, res, next) {
 
 router.post("/:id/read", ensureLoggedIn, async function (req, res, next) {
   let message = await Message.get(req.params.id);
+
   const currentUser = res.locals.user.username;
   if (currentUser !== message.to_user.username) {
     throw new UnauthorizedError("You're not Islandboi!");
   }
+
   message = await Message.markRead(req.params.id);
+
   return res.json({ message });
 });
 

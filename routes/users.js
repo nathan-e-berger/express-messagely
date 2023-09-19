@@ -15,6 +15,7 @@ const router = new Router();
 
 router.get("/", ensureLoggedIn, async function (req, res, next) {
   const users = await User.all();
+
   return res.json({ users });
 });
 
@@ -24,11 +25,13 @@ router.get("/", ensureLoggedIn, async function (req, res, next) {
  * => {user: {username, first_name, last_name, phone, join_at, last_login_at}}
  *
  **/
+router.get("/:username",
+  ensureCorrectUser,
+  async function (req, res, next) {
+    const user = await User.get(req.params.username);
 
-router.get("/:username", ensureLoggedIn, ensureCorrectUser, async function (req, res, next) {
-  const user = await User.get(req.params.username);
-  return res.json({ user });
-});
+    return res.json({ user });
+  });
 
 
 /** GET /:username/to - get messages to user
@@ -41,10 +44,13 @@ router.get("/:username", ensureLoggedIn, ensureCorrectUser, async function (req,
  *
  **/
 
-router.get("/:username/to", ensureLoggedIn, ensureCorrectUser, async function (req, res, next) {
-  const messages = await User.messagesTo(req.params.username);
-  return res.json({ messages });
-});
+router.get("/:username/to",
+  ensureCorrectUser,
+  async function (req, res, next) {
+    const messages = await User.messagesTo(req.params.username);
+
+    return res.json({ messages });
+  });
 
 
 /** GET /:username/from - get messages from user
@@ -57,9 +63,12 @@ router.get("/:username/to", ensureLoggedIn, ensureCorrectUser, async function (r
  *
  **/
 
-router.get("/:username/from", ensureLoggedIn, ensureCorrectUser, async function (req, res, next) {
-  const messages = await User.messagesFrom(req.params.username);
-  return res.json({ messages });
-});
+router.get("/:username/from",
+  ensureCorrectUser,
+  async function (req, res, next) {
+    const messages = await User.messagesFrom(req.params.username);
+
+    return res.json({ messages });
+  });
 
 module.exports = router;
