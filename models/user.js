@@ -39,11 +39,13 @@ class User {
       [username]);
     const user = result.rows[0];
 
+    //TODO: throw unauthorized, don't let them know the username is not found
     if (!user) {
       throw new NotFoundError("Username not found");
     }
 
-    return await bcrypt.compare(password, user.password);
+    //return explicitly if statement evaluates to true, allow specifically vs deny broadly
+    return await bcrypt.compare(password, user.password) === true;
   }
 
   /** Update last_login_at for user */
@@ -66,6 +68,7 @@ class User {
   /** All: basic info on all users:
    * [{username, first_name, last_name}, ...] */
 
+  //TODO: add ORDER BY, don't let SQL be the boss
   static async all() {
     const result = await db.query(
       `SELECT username, first_name, last_name
